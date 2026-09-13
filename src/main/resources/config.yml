@@ -1,0 +1,61 @@
+# ==============================================================================
+#                      DRAKESTRANSLATE - CONFIGURACIÓN OFICIAL
+#                  DrakesCraft Network · Paper/Purpur 1.21.1
+# ==============================================================================
+
+# Proveedor principal de traducción: 'google', 'libretranslate', o 'auto'
+# En modo 'auto' intentará usar Google Cloud y si falla o no hay keys recurrirá a LibreTranslate.
+provider: 'auto'
+
+# Configuración de Google Cloud Translation API v2
+# Cada cuenta de Google Cloud otorga 500.000 caracteres GRATIS todos los meses.
+# Puedes colocar 1, 2, 4 o más claves de API aquí para multiplicar tu cuota gratis!
+google:
+  api-keys:
+    - "" # Pega aquí tu clave: AIzaSy...
+  # Estrategia de rotación:
+  # - 'round-robin': Distribuye uniformemente las llamadas entre todas las claves.
+  # - 'failover': Usa la primera clave y si se agota la cuota (429/403) conmuta a la siguiente.
+  rotation-strategy: 'round-robin'
+  timeout-millis: 4000
+
+# Configuración de LibreTranslate (Instancia de respaldo local en Star)
+libretranslate:
+  url: 'https://translate.drakescraft.cl/translate'
+  api-key: ''
+  timeout-millis: 5000
+
+# Caché en Memoria (Evita re-consultar frases frecuentes como 'hola', 'gg', etc.)
+cache:
+  enabled: true
+  max-entries: 10000
+  expire-after-hours: 24
+
+# Configuración de Chat y Experiencia Visual
+chat:
+  # Máximo número de caracteres a traducir por mensaje individual (evita abuso de cuota)
+  max-characters: 256
+  # Si es true, al pasar el cursor (hover) sobre el mensaje se verá el original y el motor
+  hover-show-original: true
+  # Formato del prefijo si se desea mostrar [ES ➔ EN] (dejar vacío si se prefiere solo hover)
+  show-inline-tag: true
+  tag-format: "<dark_gray>[<aqua>{source}</aqua> <gray>→</gray> <green>{target}</green>]</dark_gray> "
+
+# Mensajes para el Jugador (Formato MiniMessage de Adventure)
+messages:
+  prefix: "<gradient:#9B59B6:#3498DB><b>Traductor</b></gradient> <dark_gray>»</dark_gray> "
+  enabled: "<green>Traducción activada hacia el idioma: <yellow><b>{lang_name}</b> ({lang_code})</yellow>.</green>"
+  disabled: "<red>Traducción de chat desactivada.</red>"
+  status-on: "<gray>Estado:</gray> <green>Activado</green> <gray>| Idioma destino:</gray> <yellow><b>{lang_name}</b> ({lang_code})</yellow>"
+  status-off: "<gray>Estado:</gray> <red>Desactivado</red> <gray>(Usa <click:suggest_command:'/translate on '><hover:show_text:'<gray>Clic para autocompletar</gray>'><yellow>/translate on <idioma></yellow></hover></click> para activarlo)</gray>"
+  status-engine: "<gray>Motor activo:</gray> <aqua>{engine}</aqua> <gray>| En caché:</gray> <aqua>{cache_size}</aqua> <gray>frases</gray>"
+  invalid-lang: "<red>Idioma desconocido: <yellow>{input}</yellow>. Usa <click:suggest_command:'/translate on '><yellow>/translate on <TAB></yellow></click> para ver los idiomas disponibles.</red>"
+  reloaded: "<green>Configuración de DrakesTranslate recargada exitosamente.</green>"
+  no-permission: "<red>No tienes permisos para ejecutar este comando.</red>"
+  help: |
+    <gradient:#9B59B6:#3498DB><b>DrakesTranslate · Guía de Comandos</b></gradient>
+    <gray>• <yellow>/translate on <idioma></yellow> <dark_gray>-</dark_gray> Activa la traducción en vivo hacia tu idioma.</gray>
+    <gray>• <yellow>/translate off</yellow> <dark_gray>-</dark_gray> Desactiva la traducción.</gray>
+    <gray>• <yellow>/translate toggle</yellow> <dark_gray>-</dark_gray> Alterna entre activado y desactivado.</gray>
+    <gray>• <yellow>/translate me <idioma> <mensaje></yellow> <dark_gray>-</dark_gray> Envía un mensaje traducido para los demás.</gray>
+    <gray>• <yellow>/translate status</yellow> <dark_gray>-</dark_gray> Muestra tu idioma y motor actual.</gray>

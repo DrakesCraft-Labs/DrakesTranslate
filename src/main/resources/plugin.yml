@@ -1,0 +1,32 @@
+name: DrakesTranslate
+version: 1.0.0
+main: cl.drakescraft.translate.DrakesTranslate
+api-version: '1.21'
+author: DrakesCraft-Labs
+description: Plugin nativo de traducción de chat en tiempo real para DrakesCraft Network
+
+commands:
+  translate:
+    description: Sistema de traducción multilingüe en tiempo real de DrakesCraft
+    aliases: [tr, traductor, drakestranslate]
+    permission: drakestranslate.use
+    usage: |
+      /<command> on <idioma> - Activar traducción de mensajes entrantes
+      /<command> off - Desactivar traducción
+      /<command> toggle - Alternar estado
+      /<command> me <idioma> [mensaje] - Traducir tu mensaje saliente
+      /<command> status - Consultar tu configuración activa
+      /<command> reload - Recargar configuración (Staff)
+  translateme:
+    description: Atajo directo para enviar mensajes traducidos
+    aliases: [trme]
+    permission: drakestranslate.use
+    usage: /<command> <idioma> <mensaje>
+
+permissions:
+  drakestranslate.use:
+    description: Permite usar comandos de traducción personal
+    default: true
+  drakestranslate.admin:
+    description: Permite recargar la configuración del plugin
+    default: op
