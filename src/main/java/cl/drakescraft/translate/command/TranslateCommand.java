@@ -3,7 +3,6 @@ package cl.drakescraft.translate.command;
 import cl.drakescraft.translate.DrakesTranslate;
 import cl.drakescraft.translate.LanguageRegistry;
 import cl.drakescraft.translate.config.PluginConfig;
-import cl.drakescraft.translate.provider.MultiProviderManager;
 import cl.drakescraft.translate.storage.StorageManager;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.Command;
@@ -24,13 +23,11 @@ public class TranslateCommand implements CommandExecutor, TabCompleter {
     private final DrakesTranslate plugin;
     private final PluginConfig config;
     private final StorageManager storageManager;
-    private final MultiProviderManager providerManager;
 
-    public TranslateCommand(DrakesTranslate plugin, PluginConfig config, StorageManager storageManager, MultiProviderManager providerManager) {
+    public TranslateCommand(DrakesTranslate plugin, PluginConfig config, StorageManager storageManager) {
         this.plugin = plugin;
         this.config = config;
         this.storageManager = storageManager;
-        this.providerManager = providerManager;
     }
 
     @Override
@@ -96,7 +93,7 @@ public class TranslateCommand implements CommandExecutor, TabCompleter {
                         ? config.getStatusOnMsg().replace("{lang_name}", LanguageRegistry.getName(currentLang)).replace("{lang_code}", currentLang.toUpperCase())
                         : config.getStatusOffMsg();
                 player.sendMessage(config.getMessage(stateMsg));
-                player.sendMessage(config.getMessage(config.getStatusEngineMsg(), "engine", providerManager.getActiveEngineName(), "cache_size", String.valueOf(providerManager.getCache().size())));
+                player.sendMessage(config.getMessage(config.getStatusEngineMsg(), "engine", plugin.getProviderManager().getActiveEngineName(), "cache_size", String.valueOf(plugin.getProviderManager().getCache().size())));
             }
             case "me" -> {
                 if (args.length < 3) {
@@ -111,7 +108,7 @@ public class TranslateCommand implements CommandExecutor, TabCompleter {
                 String msgToTranslate = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
                 player.sendMessage(config.getMessage("<gray>Traduciendo y enviando mensaje...</gray>"));
 
-                providerManager.translate(msgToTranslate, "auto", targetLang).thenAccept(result -> {
+                plugin.getProviderManager().translate(msgToTranslate, "auto", targetLang).thenAccept(result -> {
                     if (result.success()) {
                         String broadcastFormat = "<dark_gray>[<aqua>" + result.sourceLanguage().toUpperCase() + "</aqua> → <green>" + result.targetLanguage().toUpperCase() + "</green>]</dark_gray> " +
                                 "<white>" + player.getName() + "</white><gray>: </gray><white>" + result.translatedText() + "</white>";

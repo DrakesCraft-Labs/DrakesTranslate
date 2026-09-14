@@ -60,18 +60,19 @@ public class DrakesTranslate extends JavaPlugin {
 
         // 5. Registrar Eventos
         getServer().getPluginManager().registerEvents(
-                new ChatListener(this, pluginConfig, storageManager, providerManager),
+                new ChatListener(this, pluginConfig, storageManager),
                 this
         );
 
         // 6. Registrar Comandos
-        TranslateCommand translateCmd = new TranslateCommand(this, pluginConfig, storageManager, providerManager);
+        TranslateCommand translateCmd = new TranslateCommand(this, pluginConfig, storageManager);
         PluginCommand cmd = getCommand("translate");
         if (cmd != null) {
             cmd.setExecutor(translateCmd);
             cmd.setTabCompleter(translateCmd);
         }
 
+        avisarCredencialesAusentes();
         getLogger().info("DrakesTranslate iniciado con éxito. Motor activo: " + providerManager.getActiveEngineName());
     }
 
@@ -115,7 +116,25 @@ public class DrakesTranslate extends JavaPlugin {
                 getLogger()
         );
 
+        avisarCredencialesAusentes();
         getLogger().info("DrakesTranslate recargado. Motor activo: " + providerManager.getActiveEngineName());
+    }
+
+    private void avisarCredencialesAusentes() {
+        boolean googleUsable = pluginConfig.getGoogleApiKeys().stream()
+                .anyMatch(key -> key != null && !key.isBlank());
+        String libreKey = pluginConfig.getLibreTranslateKey();
+        boolean libreConClave = libreKey != null && !libreKey.isBlank();
+        String modo = pluginConfig.getProviderMode();
+
+        if (!googleUsable && !"libretranslate".equalsIgnoreCase(modo)) {
+            getLogger().warning("google.api-keys no tiene ninguna clave utilizable: Google Cloud no se usara.");
+        }
+        if (!libreConClave && !"google".equalsIgnoreCase(modo)) {
+            getLogger().warning("libretranslate.api-key esta vacia: si la instancia de "
+                    + pluginConfig.getLibreTranslateUrl()
+                    + " exige clave, TODA peticion sera anonima y respondera HTTP 429.");
+        }
     }
 
     public PluginConfig getPluginConfig() { return pluginConfig; }

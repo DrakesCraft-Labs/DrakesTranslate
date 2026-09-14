@@ -1,7 +1,7 @@
 package cl.drakescraft.translate.listener;
 
+import cl.drakescraft.translate.DrakesTranslate;
 import cl.drakescraft.translate.config.PluginConfig;
-import cl.drakescraft.translate.provider.MultiProviderManager;
 import cl.drakescraft.translate.provider.TranslationResult;
 import cl.drakescraft.translate.storage.StorageManager;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -14,25 +14,22 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class ChatListener implements Listener {
 
-    private final JavaPlugin plugin;
+    private final DrakesTranslate plugin;
     private final PluginConfig config;
     private final StorageManager storageManager;
-    private final MultiProviderManager providerManager;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private final PlainTextComponentSerializer plainSerializer = PlainTextComponentSerializer.plainText();
 
-    public ChatListener(JavaPlugin plugin, PluginConfig config, StorageManager storageManager, MultiProviderManager providerManager) {
+    public ChatListener(DrakesTranslate plugin, PluginConfig config, StorageManager storageManager) {
         this.plugin = plugin;
         this.config = config;
         this.storageManager = storageManager;
-        this.providerManager = providerManager;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -77,7 +74,7 @@ public class ChatListener implements Listener {
             String targetLang = entry.getKey();
             List<Player> recipients = entry.getValue();
 
-            providerManager.translate(originalMessage, "auto", targetLang).thenAccept(result -> {
+            plugin.getProviderManager().translate(originalMessage, "auto", targetLang).thenAccept(result -> {
                 if (result.success() && !result.translatedText().equalsIgnoreCase(originalMessage)) {
                     Component translatedComponent = buildTranslatedMessage(sender, result, originalMessage);
                     for (Player recipient : recipients) {

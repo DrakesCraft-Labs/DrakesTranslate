@@ -9,6 +9,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 public class LibreTranslateProvider implements TranslationProvider {
@@ -18,6 +20,11 @@ public class LibreTranslateProvider implements TranslationProvider {
     private final int timeoutMillis;
     private final Logger logger;
     private final HttpClient httpClient;
+    // Un fallo de credenciales afecta a cada mensaje de chat: sin estrangular, un solo
+    // problema persistente escribe decenas de WARN identicos por hora (ticket 474).
+    private static final long INTERVALO_AVISO_MILLIS = 60_000L;
+    private final AtomicLong ultimoAviso = new AtomicLong(0L);
+    private final AtomicInteger avisosOmitidos = new AtomicInteger(0);
 
     public LibreTranslateProvider(String url, String apiKey, int timeoutMillis, Logger logger) {
         this.url = (url != null && !url.isBlank()) ? url : "https://translate.drakescraft.cl/translate";
@@ -73,13 +80,25 @@ public class LibreTranslateProvider implements TranslationProvider {
                             logger.warning("[DrakesTranslate] Error parseando JSON de LibreTranslate: " + e.getMessage());
                         }
                     } else {
-                        logger.warning("[DrakesTranslate] LibreTranslate HTTP " + response.statusCode() + ": " + response.body());
+                        avisarEstrangulado("LibreTranslate HTTP " + response.statusCode() + ": " + response.body());
                     }
                     return TranslationResult.failure(text, sourceLanguage, targetLanguage, "LibreTranslate");
                 })
                 .exceptionally(ex -> {
-                    logger.warning("[DrakesTranslate] Excepción conectando a LibreTranslate: " + ex.getMessage());
+                    avisarEstrangulado("Excepción conectando a LibreTranslate: " + ex.getMessage());
                     return TranslationResult.failure(text, sourceLanguage, targetLanguage, "LibreTranslate");
                 });
+    }
+
+    private void avisarEstrangulado(String mensaje) {
+        long ahora = System.currentTimeMillis();
+        long previo = ultimoAviso.get();
+        if (ahora - previo < INTERVALO_AVISO_MILLIS || !ultimoAviso.compareAndSet(previo, ahora)) {
+            avisosOmitidos.incrementAndGet();
+            return;
+        }
+        int omitidos = avisosOmitidos.getAndSet(0);
+        logger.warning("[DrakesTranslate] " + mensaje
+                + (omitidos > 0 ? " (" + omitidos + " avisos identicos omitidos en el ultimo minuto)" : ""));
     }
 }
