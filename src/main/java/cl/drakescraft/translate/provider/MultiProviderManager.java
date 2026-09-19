@@ -67,11 +67,19 @@ public class MultiProviderManager {
                 });
     }
 
+    public boolean isAnyAvailable() {
+        return (googleProvider != null && googleProvider.isAvailable())
+                || (libreTranslateProvider != null && libreTranslateProvider.isAvailable());
+    }
+
     public String getActiveEngineName() {
-        if (googleProvider.isAvailable()) {
+        if (googleProvider != null && googleProvider.isAvailable()) {
             return googleProvider.getName();
         }
-        return libreTranslateProvider.getName();
+        if (libreTranslateProvider != null && libreTranslateProvider.isAvailable()) {
+            return libreTranslateProvider.getName();
+        }
+        return "Ninguno (Desconectado / Modo Seguro)";
     }
 
     public TranslationCache getCache() {

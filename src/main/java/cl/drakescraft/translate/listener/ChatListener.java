@@ -34,6 +34,13 @@ public class ChatListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onAsyncChat(AsyncChatEvent event) {
+        // Fast-path / Circuit Breaker: Si Star está caído o no hay ningún motor de traducción disponible,
+        // abortar de inmediato. NO tocar event.viewers(), garantizando que Paper envíe paquetes nativos
+        // firmados de chat de jugador (ClientboundPlayerChatPacket) con 0 ms de lag y sin romper mods de clientes.
+        if (!plugin.getProviderManager().isAnyAvailable()) {
+            return;
+        }
+
         Player sender = event.getPlayer();
         String originalMessage = plainSerializer.serialize(event.message()).trim();
 

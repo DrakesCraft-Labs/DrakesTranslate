@@ -23,7 +23,7 @@ google:
 libretranslate:
   url: 'https://translate.drakescraft.cl/translate'
   api-key: ''
-  timeout-millis: 5000
+  timeout-millis: 2000
 
 # Caché en Memoria (Evita re-consultar frases frecuentes como 'hola', 'gg', etc.)
 cache:
