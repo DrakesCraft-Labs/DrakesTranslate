@@ -26,6 +26,7 @@ public class PluginConfig {
     private int maxCharacters;
     private boolean hoverShowOriginal;
     private boolean showInlineTag;
+    private boolean autoDetectClientLocale;
     private String tagFormat;
 
     private String prefix;
@@ -65,6 +66,7 @@ public class PluginConfig {
         this.maxCharacters = c.getInt("chat.max-characters", 256);
         this.hoverShowOriginal = c.getBoolean("chat.hover-show-original", true);
         this.showInlineTag = c.getBoolean("chat.show-inline-tag", true);
+        this.autoDetectClientLocale = c.getBoolean("chat.auto-detect-client-locale", true);
         this.tagFormat = c.getString("chat.tag-format", "<dark_gray>[<aqua>{source}</aqua> <gray>→</gray> <green>{target}</green>]</dark_gray> ");
 
         this.prefix = c.getString("messages.prefix", "<gradient:#9B59B6:#3498DB><b>Traductor</b></gradient> <dark_gray>»</dark_gray> ");
@@ -112,6 +114,7 @@ public class PluginConfig {
     public int getMaxCharacters() { return maxCharacters; }
     public boolean isHoverShowOriginal() { return hoverShowOriginal; }
     public boolean isShowInlineTag() { return showInlineTag; }
+    public boolean isAutoDetectClientLocale() { return autoDetectClientLocale; }
     public String getTagFormat() { return tagFormat; }
 
     public String getEnabledMsg() { return enabledMsg; }

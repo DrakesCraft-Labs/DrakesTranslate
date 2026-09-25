@@ -48,57 +48,101 @@ public class ChatListener implements Listener {
             return;
         }
 
-        // Agrupar espectadores que tienen la traducción activada por idioma destino
-        Map<String, List<Player>> languageGroups = new HashMap<>();
+        // Agrupar espectadores según su idioma preferido / efectivo
+        Map<String, List<Player>> recipientsByTargetLang = new HashMap<>();
         Set<Audience> toRemove = new HashSet<>();
 
         for (Audience viewer : event.viewers()) {
             if (viewer instanceof Player recipient) {
-                // El emisor siempre ve lo que escribió directamente (a menos que use /translate me)
+                // El emisor siempre ve su mensaje original tal como lo escribió
                 if (recipient.getUniqueId().equals(sender.getUniqueId())) {
                     continue;
                 }
-                if (storageManager.isEnabled(recipient.getUniqueId())) {
-                    String targetLang = storageManager.getTargetLanguage(recipient.getUniqueId());
-                    languageGroups.computeIfAbsent(targetLang.toLowerCase(), k -> new ArrayList<>()).add(recipient);
+                String effectiveLang = storageManager.getEffectiveLanguage(recipient, config.isAutoDetectClientLocale());
+                // Si el jugador desactivó la traducción con /translate off, effectiveLang es null -> ve mensaje original
+                if (effectiveLang != null) {
+                    recipientsByTargetLang.computeIfAbsent(effectiveLang.toLowerCase(), k -> new ArrayList<>()).add(recipient);
                     toRemove.add(recipient);
                 }
             }
         }
 
-        if (languageGroups.isEmpty()) {
+        if (recipientsByTargetLang.isEmpty()) {
             return;
         }
 
-        // Excluir a los jugadores que recibirán la versión traducida para evitar duplicados
+        // Excluir a los jugadores que procesaremos manualmente para no enviar duplicados
         event.viewers().removeAll(toRemove);
 
-        // Obtener el formato original del render del evento
+        // Formato original renderizado por el servidor
         Component originalRendered = event.renderer().render(sender, sender.displayName(), event.message(), sender);
 
-        // Procesar cada idioma objetivo de forma asíncrona (1 petición por idioma, no por jugador)
-        for (Map.Entry<String, List<Player>> entry : languageGroups.entrySet()) {
-            String targetLang = entry.getKey();
-            List<Player> recipients = entry.getValue();
+        // Determinar el idioma base estimado del emisor
+        String resolvedSenderLang = storageManager.getEffectiveLanguage(sender, config.isAutoDetectClientLocale());
+        final String senderLang = (resolvedSenderLang != null) ? resolvedSenderLang : "es";
 
-            plugin.getProviderManager().translate(originalMessage, "auto", targetLang).thenAccept(result -> {
-                if (result.success() && !result.translatedText().equalsIgnoreCase(originalMessage)) {
-                    Component translatedComponent = buildTranslatedMessage(sender, result, originalMessage);
-                    for (Player recipient : recipients) {
-                        if (recipient.isOnline()) {
-                            recipient.sendMessage(translatedComponent);
-                        }
-                    }
-                } else {
-                    // Fallback si no fue necesaria traducción o falló la API
-                    for (Player recipient : recipients) {
-                        if (recipient.isOnline()) {
-                            recipient.sendMessage(originalRendered);
+        // Idioma objetivo primario cruzado:
+        // Si el emisor es inglés, el objetivo primario es español ('es')
+        // Si el emisor es español o cualquier otro, el objetivo primario es inglés ('en')
+        String primaryTarget = "en".equalsIgnoreCase(senderLang) ? "es" : "en";
+
+        plugin.getProviderManager().translate(originalMessage, "auto", primaryTarget).thenAccept(result -> {
+            String detectedSource = (result.sourceLanguage() != null && !result.sourceLanguage().isBlank())
+                    ? result.sourceLanguage().toLowerCase()
+                    : senderLang;
+
+            for (Map.Entry<String, List<Player>> entry : recipientsByTargetLang.entrySet()) {
+                String targetLang = entry.getKey();
+                List<Player> targetPlayers = entry.getValue();
+
+                // Caso 1: El idioma del receptor coincide con el idioma en que fue escrito el mensaje
+                // O el texto traducido es idéntico al original (ej. 'gg', 'lol', emojis)
+                // -> Ven el mensaje original directamente sin tags ni latencia
+                if (targetLang.equalsIgnoreCase(detectedSource) || result.translatedText().equalsIgnoreCase(originalMessage)) {
+                    for (Player p : targetPlayers) {
+                        if (p.isOnline()) {
+                            p.sendMessage(originalRendered);
                         }
                     }
                 }
-            });
-        }
+                // Caso 2: El receptor habla el idioma objetivo primario que acabamos de traducir
+                else if (targetLang.equalsIgnoreCase(primaryTarget)) {
+                    if (result.success() && !result.translatedText().equalsIgnoreCase(originalMessage)) {
+                        Component translatedComponent = buildTranslatedMessage(sender, result, originalMessage);
+                        for (Player p : targetPlayers) {
+                            if (p.isOnline()) {
+                                p.sendMessage(translatedComponent);
+                            }
+                        }
+                    } else {
+                        for (Player p : targetPlayers) {
+                            if (p.isOnline()) {
+                                p.sendMessage(originalRendered);
+                            }
+                        }
+                    }
+                }
+                // Caso 3: Idioma secundario distinto al primario (ej. receptor portugués o francés)
+                else {
+                    plugin.getProviderManager().translate(originalMessage, detectedSource, targetLang).thenAccept(secRes -> {
+                        if (secRes.success() && !secRes.translatedText().equalsIgnoreCase(originalMessage)) {
+                            Component translatedComponent = buildTranslatedMessage(sender, secRes, originalMessage);
+                            for (Player p : targetPlayers) {
+                                if (p.isOnline()) {
+                                    p.sendMessage(translatedComponent);
+                                }
+                            }
+                        } else {
+                            for (Player p : targetPlayers) {
+                                if (p.isOnline()) {
+                                    p.sendMessage(originalRendered);
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        });
     }
 
     private Component buildTranslatedMessage(Player sender, TranslationResult result, String originalText) {

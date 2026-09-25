@@ -87,10 +87,13 @@ public class TranslateCommand implements CommandExecutor, TabCompleter {
                 }
             }
             case "status", "info" -> {
-                boolean isEnabled = storageManager.isEnabled(player.getUniqueId());
-                String currentLang = storageManager.getTargetLanguage(player.getUniqueId());
+                boolean hasExplicit = storageManager.hasExplicitPreference(player.getUniqueId());
+                String effectiveLang = storageManager.getEffectiveLanguage(player, config.isAutoDetectClientLocale());
+                boolean isEnabled = effectiveLang != null;
+                String currentLang = effectiveLang != null ? effectiveLang : storageManager.getTargetLanguage(player.getUniqueId());
+                String modeExtra = hasExplicit ? "" : " <gray>(Auto-detectado de cliente)</gray>";
                 String stateMsg = isEnabled
-                        ? config.getStatusOnMsg().replace("{lang_name}", LanguageRegistry.getName(currentLang)).replace("{lang_code}", currentLang.toUpperCase())
+                        ? config.getStatusOnMsg().replace("{lang_name}", LanguageRegistry.getName(currentLang)).replace("{lang_code}", currentLang.toUpperCase()) + modeExtra
                         : config.getStatusOffMsg();
                 player.sendMessage(config.getMessage(stateMsg));
                 player.sendMessage(config.getMessage(config.getStatusEngineMsg(), "engine", plugin.getProviderManager().getActiveEngineName(), "cache_size", String.valueOf(plugin.getProviderManager().getCache().size())));
