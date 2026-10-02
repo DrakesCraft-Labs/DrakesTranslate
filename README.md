@@ -56,3 +56,11 @@ El archivo `.jar` resultante se genera en `target/DrakesTranslate-1.0.0.jar`.
 
 ---
 © 2026 DrakesCraft Network · DrakesCraft-Labs
+
+---
+
+## 📄 License & Intellectual Property
+
+Copyright © 2026 [**JackStar6677-1**](https://github.com/JackStar6677-1) · [**DrakesCraft Labs**](https://github.com/DrakesCraft-Labs). All Rights Reserved.
+
+This software is **Source-Available** for public inspection and technical audit. Redistribution, commercial repackaging, or unauthorized derivative distribution without explicit written permission from the author is strictly prohibited.
